@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.voxo.co)",
+      "WebFetch(domain:voxo.co)",
+      "WebFetch(domain:api.voxo.co)",
+      "WebFetch(domain:developer.voxo.co)"
+    ]
+  }
+}
