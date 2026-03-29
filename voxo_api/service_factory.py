@@ -33,9 +33,3 @@ class ServiceFactory:
                 if issubclass(obj, AbstractService) and obj is not AbstractService:
                     services[obj.__name__] = obj
             self._scan_dir(entry_path, module_name, services)
-
-    def get_version_services(self, version: str) -> dict[str, type]:
-        try:
-            return self._services[version]
-        except KeyError:
-            raise LookupError(f"Version '{version}' not found")
