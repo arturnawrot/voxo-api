@@ -39,14 +39,14 @@ class TestServiceFactoryInit:
     @patch("voxo_api.service_factory.os.listdir")
     def test_loads_single_service(self, mock_listdir, _mock_isdir):
         FakeService = _make_concrete_service("FakeService")
-        mod = _build_module("voxo_api.services.fake", [FakeService])
+        mod = _build_module("voxo_api.services.v1.fake", [FakeService])
 
-        mock_listdir.return_value = ["fake"]
+        mock_listdir.side_effect = [["v1"], ["fake"], []]
 
-        with _with_modules(**{"voxo_api.services.fake": mod}):
+        with _with_modules(**{"voxo_api.services.v1.fake": mod}):
             factory = ServiceFactory()
 
-        assert factory.get_service_class("FakeService") is FakeService
+        assert factory.get_version_services("v1")["FakeService"] is FakeService
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
@@ -54,16 +54,16 @@ class TestServiceFactoryInit:
         ServiceA = _make_concrete_service("ServiceA")
         ServiceB = _make_concrete_service("ServiceB")
 
-        mod_a = _build_module("voxo_api.services.a", [ServiceA])
-        mod_b = _build_module("voxo_api.services.b", [ServiceB])
+        mod_a = _build_module("voxo_api.services.v1.a", [ServiceA])
+        mod_b = _build_module("voxo_api.services.v1.b", [ServiceB])
 
-        mock_listdir.return_value = ["a", "b"]
+        mock_listdir.side_effect = [["v1"], ["a", "b"], [], []]
 
-        with _with_modules(**{"voxo_api.services.a": mod_a, "voxo_api.services.b": mod_b}):
+        with _with_modules(**{"voxo_api.services.v1.a": mod_a, "voxo_api.services.v1.b": mod_b}):
             factory = ServiceFactory()
 
-        assert factory.get_service_class("ServiceA") is ServiceA
-        assert factory.get_service_class("ServiceB") is ServiceB
+        assert factory.get_version_services("v1")["ServiceA"] is ServiceA
+        assert factory.get_version_services("v1")["ServiceB"] is ServiceB
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
@@ -71,15 +71,32 @@ class TestServiceFactoryInit:
         ServiceX = _make_concrete_service("ServiceX")
         ServiceY = _make_concrete_service("ServiceY")
 
-        mod = _build_module("voxo_api.services.multi", [ServiceX, ServiceY])
+        mod = _build_module("voxo_api.services.v1.multi", [ServiceX, ServiceY])
 
-        mock_listdir.return_value = ["multi"]
+        mock_listdir.side_effect = [["v1"], ["multi"], []]
 
-        with _with_modules(**{"voxo_api.services.multi": mod}):
+        with _with_modules(**{"voxo_api.services.v1.multi": mod}):
             factory = ServiceFactory()
 
-        assert factory.get_service_class("ServiceX") is ServiceX
-        assert factory.get_service_class("ServiceY") is ServiceY
+        assert factory.get_version_services("v1")["ServiceX"] is ServiceX
+        assert factory.get_version_services("v1")["ServiceY"] is ServiceY
+
+    @patch("os.path.isdir", return_value=True)
+    @patch("voxo_api.service_factory.os.listdir")
+    def test_loads_services_from_multiple_versions(self, mock_listdir, _mock_isdir):
+        ServiceA = _make_concrete_service("ServiceA")
+        ServiceB = _make_concrete_service("ServiceB")
+
+        mod_v1 = _build_module("voxo_api.services.v1.a", [ServiceA])
+        mod_v2 = _build_module("voxo_api.services.v2.b", [ServiceB])
+
+        mock_listdir.side_effect = [["v1", "v2"], ["a"], [], ["b"], []]
+
+        with _with_modules(**{"voxo_api.services.v1.a": mod_v1, "voxo_api.services.v2.b": mod_v2}):
+            factory = ServiceFactory()
+
+        assert factory.get_version_services("v1")["ServiceA"] is ServiceA
+        assert factory.get_version_services("v2")["ServiceB"] is ServiceB
 
 
 class TestSkipsNonServiceEntries:
@@ -112,13 +129,13 @@ class TestSkipsNonServiceClasses:
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
     def test_skips_abstract_service_itself(self, mock_listdir, _mock_isdir):
-        mod = _build_module("voxo_api.services.base", [])
-        mock_listdir.return_value = ["base"]
+        mod = _build_module("voxo_api.services.v1.base", [])
+        mock_listdir.side_effect = [["v1"], ["base"], []]
 
-        with _with_modules(**{"voxo_api.services.base": mod}):
+        with _with_modules(**{"voxo_api.services.v1.base": mod}):
             factory = ServiceFactory()
 
-        assert "AbstractService" not in factory._services
+        assert "AbstractService" not in factory._services.get("v1", {})
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
@@ -126,53 +143,52 @@ class TestSkipsNonServiceClasses:
         class NotAService:
             pass
 
-        mod = _build_module("voxo_api.services.misc", [NotAService])
-        mock_listdir.return_value = ["misc"]
+        mod = _build_module("voxo_api.services.v1.misc", [NotAService])
+        mock_listdir.side_effect = [["v1"], ["misc"], []]
 
-        with _with_modules(**{"voxo_api.services.misc": mod}):
+        with _with_modules(**{"voxo_api.services.v1.misc": mod}):
             factory = ServiceFactory()
 
-        assert "NotAService" not in factory._services
+        assert "NotAService" not in factory._services.get("v1", {})
 
 
-class TestGetServiceClass:
+class TestGetVersionServices:
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
     def test_returns_correct_class(self, mock_listdir, _mock_isdir):
         MyService = _make_concrete_service("MyService")
-        mod = _build_module("voxo_api.services.my", [MyService])
+        mod = _build_module("voxo_api.services.v1.my", [MyService])
 
-        mock_listdir.return_value = ["my"]
+        mock_listdir.side_effect = [["v1"], ["my"], []]
 
-        with _with_modules(**{"voxo_api.services.my": mod}):
+        with _with_modules(**{"voxo_api.services.v1.my": mod}):
             factory = ServiceFactory()
 
-        assert factory.get_service_class("MyService") is MyService
+        assert factory.get_version_services("v1")["MyService"] is MyService
 
     @patch("voxo_api.service_factory.os.listdir")
-    def test_raises_lookup_error_for_unknown_service(self, mock_listdir):
+    def test_raises_lookup_error_for_unknown_version(self, mock_listdir):
         mock_listdir.return_value = []
 
         factory = ServiceFactory()
-        with pytest.raises(LookupError, match="Service 'DoesNotExist' not found"):
-            factory.get_service_class("DoesNotExist")
+        with pytest.raises(LookupError, match="Version 'v99' not found"):
+            factory.get_version_services("v99")
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
     def test_name_is_case_sensitive(self, mock_listdir, _mock_isdir):
         MyService = _make_concrete_service("MyService")
-        mod = _build_module("voxo_api.services.my", [MyService])
+        mod = _build_module("voxo_api.services.v1.my", [MyService])
 
-        mock_listdir.return_value = ["my"]
+        mock_listdir.side_effect = [["v1"], ["my"], []]
 
-        with _with_modules(**{"voxo_api.services.my": mod}):
+        with _with_modules(**{"voxo_api.services.v1.my": mod}):
             factory = ServiceFactory()
 
-        with pytest.raises(LookupError):
-            factory.get_service_class("myservice")
-        with pytest.raises(LookupError):
-            factory.get_service_class("MYSERVICE")
+        services = factory.get_version_services("v1")
+        assert "myservice" not in services
+        assert "MYSERVICE" not in services
 
 
 class TestCachingBehavior:
@@ -181,18 +197,18 @@ class TestCachingBehavior:
     @patch("voxo_api.service_factory.os.listdir")
     def test_does_not_rescan_on_get(self, mock_listdir, _mock_isdir):
         ServiceA = _make_concrete_service("ServiceA")
-        mod = _build_module("voxo_api.services.a", [ServiceA])
+        mod = _build_module("voxo_api.services.v1.a", [ServiceA])
 
-        mock_listdir.return_value = ["a"]
+        mock_listdir.side_effect = [["v1"], ["a"], []]
 
-        with _with_modules(**{"voxo_api.services.a": mod}):
+        with _with_modules(**{"voxo_api.services.v1.a": mod}):
             factory = ServiceFactory()
 
         mock_listdir.reset_mock()
 
-        factory.get_service_class("ServiceA")
-        factory.get_service_class("ServiceA")
-        factory.get_service_class("ServiceA")
+        factory.get_version_services("v1")
+        factory.get_version_services("v1")
+        factory.get_version_services("v1")
 
         mock_listdir.assert_not_called()
 
@@ -206,25 +222,24 @@ class TestCachingBehavior:
         mock_listdir.assert_called_once()
 
 
-class TestLastServiceWinsOnNameCollision:
+class TestSameNameAcrossVersions:
 
     @patch("os.path.isdir", return_value=True)
     @patch("voxo_api.service_factory.os.listdir")
-    def test_duplicate_name_across_directories_last_wins(self, mock_listdir, _mock_isdir):
-        """If two packages define a service with the same class name, the last one scanned wins."""
-        ServiceDup1 = _make_concrete_service("Dup")
-        ServiceDup2 = _make_concrete_service("Dup")
+    def test_same_name_in_different_versions_are_independent(self, mock_listdir, _mock_isdir):
+        ServiceV1 = _make_concrete_service("MyService")
+        ServiceV2 = _make_concrete_service("MyService")
 
-        mod_a = _build_module("voxo_api.services.a", [ServiceDup1])
-        mod_b = _build_module("voxo_api.services.b", [ServiceDup2])
+        mod_v1 = _build_module("voxo_api.services.v1.svc", [ServiceV1])
+        mod_v2 = _build_module("voxo_api.services.v2.svc", [ServiceV2])
 
-        mock_listdir.return_value = ["a", "b"]
+        mock_listdir.side_effect = [["v1", "v2"], ["svc"], [], ["svc"], []]
 
-        with _with_modules(**{"voxo_api.services.a": mod_a, "voxo_api.services.b": mod_b}):
+        with _with_modules(**{"voxo_api.services.v1.svc": mod_v1, "voxo_api.services.v2.svc": mod_v2}):
             factory = ServiceFactory()
 
-        result = factory.get_service_class("Dup")
-        assert result is ServiceDup2
+        assert factory.get_version_services("v1")["MyService"] is ServiceV1
+        assert factory.get_version_services("v2")["MyService"] is ServiceV2
 
 
 class TestEmptyServicesDir:
@@ -249,10 +264,10 @@ class TestIntegration:
 
     def test_discovers_call_blocking_service(self):
         factory = ServiceFactory()
-        from voxo_api.services.call_blocking import CallBlocking
-        assert factory.get_service_class("CallBlocking") is CallBlocking
+        from voxo_api.services.v1.call_blocking import CallBlocking
+        assert factory.get_version_services("v1")["CallBlocking"] is CallBlocking
 
-    def test_raises_for_nonexistent_service(self):
+    def test_raises_for_nonexistent_version(self):
         factory = ServiceFactory()
         with pytest.raises(LookupError):
-            factory.get_service_class("NonExistentService")
+            factory.get_version_services("v99")

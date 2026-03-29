@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock, patch, call
 
-import pytest
-
 from voxo_api.base_api_client import BaseApiClient
 from voxo_api.credentials import CredentialsV1, CredentialsV2
 from voxo_api.http_client import HttpClient
@@ -30,94 +28,25 @@ class TestBaseApiClientInit:
         assert client.credentials == []
 
 
-class TestVerifyCredentials:
-
-    def test_verifies_credentials_with_token(self):
-        cred = MagicMock()
-        cred.api_token = "tok"
-        http = MagicMock(spec=HttpClient)
-
-        BaseApiClient(credentials=[cred], http=http)
-        cred.verify_token.assert_called_once_with(http)
-
-    def test_skips_credentials_without_token(self):
-        cred = MagicMock()
-        cred.api_token = None
-        http = MagicMock(spec=HttpClient)
-
-        BaseApiClient(credentials=[cred], http=http)
-        cred.verify_token.assert_not_called()
-
-    def test_verifies_multiple_credentials(self):
-        cred1 = MagicMock()
-        cred1.api_token = "tok1"
-        cred2 = MagicMock()
-        cred2.api_token = "tok2"
-        cred3 = MagicMock()
-        cred3.api_token = None
-        http = MagicMock(spec=HttpClient)
-
-        BaseApiClient(credentials=[cred1, cred2, cred3], http=http)
-        cred1.verify_token.assert_called_once_with(http)
-        cred2.verify_token.assert_called_once_with(http)
-        cred3.verify_token.assert_not_called()
-
-    def test_propagates_verification_error(self):
-        cred = MagicMock()
-        cred.api_token = "bad"
-        cred.verify_token.side_effect = Exception("invalid token")
-        http = MagicMock(spec=HttpClient)
-
-        with pytest.raises(Exception, match="invalid token"):
-            BaseApiClient(credentials=[cred], http=http)
-
 
 class TestAddCredentials:
 
-    def test_adds_and_verifies(self):
+    def test_adds_credentials(self):
         http = MagicMock(spec=HttpClient)
         client = BaseApiClient(credentials=[], http=http)
 
         cred = MagicMock()
-        cred.api_token = "new-tok"
         client.add_credentials(cred)
 
         assert cred in client.credentials
-        cred.verify_token.assert_called_once_with(http)
-
-    def test_adds_without_verification_when_no_token(self):
-        http = MagicMock(spec=HttpClient)
-        client = BaseApiClient(credentials=[], http=http)
-
-        cred = MagicMock()
-        cred.api_token = None
-        client.add_credentials(cred)
-
-        assert cred in client.credentials
-        cred.verify_token.assert_not_called()
 
     def test_add_multiple_credentials(self):
         http = MagicMock(spec=HttpClient)
         client = BaseApiClient(credentials=[], http=http)
 
         cred1 = MagicMock()
-        cred1.api_token = "a"
         cred2 = MagicMock()
-        cred2.api_token = "b"
         client.add_credentials(cred1)
         client.add_credentials(cred2)
 
         assert len(client.credentials) == 2
-
-    def test_propagates_verification_error_on_add(self):
-        http = MagicMock(spec=HttpClient)
-        client = BaseApiClient(credentials=[], http=http)
-
-        cred = MagicMock()
-        cred.api_token = "bad"
-        cred.verify_token.side_effect = Exception("bad token")
-
-        with pytest.raises(Exception, match="bad token"):
-            client.add_credentials(cred)
-        # Should not be appended on failure
-        assert cred not in client.credentials

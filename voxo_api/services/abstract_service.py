@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
 from urllib.parse import urljoin
 
 from voxo_api.constants import BASE_URL
 from voxo_api.credentials import Credentials
 from voxo_api.enums import HttpMethod
-
-if TYPE_CHECKING:
-    from voxo_api.base_api_client import BaseApiClient
+from voxo_api.base_api_client import BaseApiClient
 
 logger = logging.getLogger(__name__)
 

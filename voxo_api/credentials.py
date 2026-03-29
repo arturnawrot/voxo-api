@@ -1,19 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from voxo_api.http_client import HttpClient
-
 
 class Credentials(ABC):
 
     def __init__(self, api_token: str | None = None) -> None:
         self.api_token = api_token
-
-    def verify_token(self, http: HttpClient) -> None:
-        pass
 
     @abstractmethod
     def get_header(self) -> dict | None:
@@ -28,18 +20,22 @@ class Credentials(ABC):
         pass
 
 
+class NoAuth(Credentials):
+
+    def __init__(self) -> None:
+        super().__init__(api_token=None)
+
+    def get_header(self) -> dict | None:
+        return None
+
+    def get_json_body(self) -> dict | None:
+        return None
+
+    def get_api_token(self) -> str:
+        return None
+
+
 class CredentialsV1(Credentials):
-
-    def verify_token(self, http: HttpClient) -> None:
-        http.request(
-            "POST",
-            "authentication",
-            json={"strategy": "jwt", "accessToken": self.api_token},
-        )
-
-    def set_token_from_credentials(self, login: str, password: str) -> str:
-        # V1 login logic — exchange login/password for a token via HTTP
-        raise NotImplementedError
 
     def get_header(self) -> dict | None:
         return {"Authorization": f"Bearer {self.api_token}"}
@@ -52,14 +48,6 @@ class CredentialsV1(Credentials):
 
 
 class CredentialsV2(Credentials):
-
-    def verify_token(self, http: HttpClient) -> None:
-        # V2 token verification logic
-        pass
-
-    def set_token_from_credentials(self, login: str, password: str) -> str:
-        # V2 login logic — exchange login/password for a token via HTTP
-        raise NotImplementedError
 
     def get_header(self) -> dict | None:
         return {"Authorization": f"Bearer {self.api_token}"}

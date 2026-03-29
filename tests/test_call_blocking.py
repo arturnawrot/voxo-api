@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 from voxo_api.credentials import CredentialsV1
-from voxo_api.services.call_blocking import CallBlocking, CallBlockingRecord
+from voxo_api.services.v1.call_blocking import CallBlocking, CallBlockingRecord
 
 
 def _make_api_client(credentials=None):

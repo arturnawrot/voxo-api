@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 import pytest
 
 from voxo_api.credentials import Credentials, CredentialsV1, CredentialsV2
@@ -28,18 +26,6 @@ class TestCredentialsABC:
         cred = CredentialsV1()
         assert cred.api_token is None
 
-    def test_base_verify_token_is_noop(self):
-        """Credentials.verify_token does nothing by default (non-abstract)."""
-        class MinimalCreds(Credentials):
-            def get_header(self): return None
-            def get_json_body(self): return None
-            def get_api_token(self): return self.api_token
-
-        cred = MinimalCreds("tok")
-        http = MagicMock()
-        cred.verify_token(http)  # should not raise
-        http.request.assert_not_called()
-
 
 # --- CredentialsV1 ---
 
@@ -61,29 +47,6 @@ class TestCredentialsV1:
         cred = CredentialsV1(api_token="secret")
         assert cred.get_api_token() == "secret"
 
-    def test_verify_token_calls_http(self):
-        http = MagicMock()
-        cred = CredentialsV1(api_token="jwt-token")
-        cred.verify_token(http)
-
-        http.request.assert_called_once_with(
-            "POST",
-            "authentication",
-            json={"strategy": "jwt", "accessToken": "jwt-token"},
-        )
-
-    def test_verify_token_propagates_http_error(self):
-        http = MagicMock()
-        http.request.side_effect = Exception("connection refused")
-        cred = CredentialsV1(api_token="bad")
-
-        with pytest.raises(Exception, match="connection refused"):
-            cred.verify_token(http)
-
-    def test_set_token_from_credentials_not_implemented(self):
-        cred = CredentialsV1(api_token="tok")
-        with pytest.raises(NotImplementedError):
-            cred.set_token_from_credentials("user", "pass")
 
 
 # --- CredentialsV2 ---
@@ -102,13 +65,3 @@ class TestCredentialsV2:
         cred = CredentialsV2(api_token="v2-secret")
         assert cred.get_api_token() == "v2-secret"
 
-    def test_verify_token_is_noop(self):
-        http = MagicMock()
-        cred = CredentialsV2(api_token="v2-token")
-        cred.verify_token(http)
-        http.request.assert_not_called()
-
-    def test_set_token_from_credentials_not_implemented(self):
-        cred = CredentialsV2(api_token="tok")
-        with pytest.raises(NotImplementedError):
-            cred.set_token_from_credentials("user", "pass")

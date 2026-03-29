@@ -1,6 +1,6 @@
 from voxo_api.credentials import Credentials, CredentialsV1
 from voxo_api.enums import HttpMethod
-from voxo_api.services.call_blocking.model import CallBlockingRecord
+from voxo_api.services.v1.call_blocking.model import CallBlockingRecord
 from voxo_api.services.abstract_service import AbstractService
 
 
