@@ -1,7 +1,7 @@
-from voxo.base_api_client import BaseApiClient
-from voxo.credentials import Credentials
-from voxo.http_client import HttpClient
-from voxo.service_factory import ServiceFactory
+from voxo_api.base_api_client import BaseApiClient
+from voxo_api.credentials import Credentials
+from voxo_api.http_client import HttpClient
+from voxo_api.service_factory import ServiceFactory
 
 
 class VoxoApiClient(BaseApiClient):

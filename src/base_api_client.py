@@ -1,5 +1,5 @@
-from voxo.credentials import Credentials
-from voxo.http_client import HttpClient
+from voxo_api.credentials import Credentials
+from voxo_api.http_client import HttpClient
 
 
 class BaseApiClient:

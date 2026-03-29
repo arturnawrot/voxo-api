@@ -1,10 +1,7 @@
 from unittest.mock import MagicMock
 
-import pytest
-
-from voxo.credentials import Credentials, CredentialsV1
-from voxo.models.call_blocking import CallBlockingRecord
-from voxo.services.call_blocking import CallBlocking
+from voxo_api.credentials import CredentialsV1
+from voxo_api.services.call_blocking import CallBlocking, CallBlockingRecord
 
 
 def _make_api_client(credentials=None):
@@ -65,7 +62,7 @@ class TestCallBlockingExecute:
 
         client.http.request.assert_called_once_with(
             "GET",
-            "call-blocking/1",
+            "https://api.voxo.co/call-blocking/1",
             headers={"Authorization": "Bearer test-token"},
             json=None,
         )

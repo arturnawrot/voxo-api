@@ -2,22 +2,22 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from voxo.credentials import CredentialsV1
-from voxo.http_client import HttpClient
-from voxo.voxo_api_client import VoxoApiClient
-from voxo.services.call_blocking import CallBlocking
+from voxo_api.credentials import CredentialsV1
+from voxo_api.http_client import HttpClient
+from voxo_api.voxo_api_client import VoxoApiClient
+from voxo_api.services.call_blocking import CallBlocking
 
 
 class TestVoxoApiClientInit:
 
-    @patch("voxo.voxo_api_client.ServiceFactory")
+    @patch("voxo_api.voxo_api_client.ServiceFactory")
     def test_creates_service_factory(self, mock_factory_cls):
         http = MagicMock(spec=HttpClient)
         client = VoxoApiClient(credentials=[], http=http)
         mock_factory_cls.assert_called_once()
         assert client.service_factory is mock_factory_cls.return_value
 
-    @patch("voxo.voxo_api_client.ServiceFactory")
+    @patch("voxo_api.voxo_api_client.ServiceFactory")
     def test_inherits_base_client_behavior(self, mock_factory_cls):
         http = MagicMock(spec=HttpClient)
         cred = MagicMock()
@@ -31,7 +31,7 @@ class TestVoxoApiClientInit:
 
 class TestGetattr:
 
-    @patch("voxo.voxo_api_client.ServiceFactory")
+    @patch("voxo_api.voxo_api_client.ServiceFactory")
     def test_returns_service_instance(self, mock_factory_cls):
         mock_service_class = MagicMock()
         mock_factory = mock_factory_cls.return_value
@@ -45,7 +45,7 @@ class TestGetattr:
         mock_service_class.assert_called_once_with(client)
         assert result is mock_service_class.return_value
 
-    @patch("voxo.voxo_api_client.ServiceFactory")
+    @patch("voxo_api.voxo_api_client.ServiceFactory")
     def test_raises_lookup_error_for_unknown_service(self, mock_factory_cls):
         mock_factory = mock_factory_cls.return_value
         mock_factory.get_service_class.side_effect = LookupError("not found")
@@ -56,7 +56,7 @@ class TestGetattr:
         with pytest.raises(LookupError):
             _ = client.NonExistent
 
-    @patch("voxo.voxo_api_client.ServiceFactory")
+    @patch("voxo_api.voxo_api_client.ServiceFactory")
     def test_creates_new_instance_each_access(self, mock_factory_cls):
         mock_service_class = MagicMock()
         mock_factory = mock_factory_cls.return_value

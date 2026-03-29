@@ -3,22 +3,10 @@ from unittest.mock import patch, MagicMock
 import pytest
 import requests
 
-from voxo.http_client import HttpClient, DEFAULT_TIMEOUT
+from voxo_api.http_client import HttpClient, DEFAULT_TIMEOUT
 
 
 class TestHttpClientInit:
-
-    def test_default_base_url(self):
-        client = HttpClient()
-        assert client.base_url == "https://api.voxo.co/"
-
-    def test_custom_base_url_trailing_slash_normalized(self):
-        client = HttpClient(base_url="https://example.com/")
-        assert client.base_url == "https://example.com/"
-
-    def test_custom_base_url_no_trailing_slash(self):
-        client = HttpClient(base_url="https://example.com")
-        assert client.base_url == "https://example.com/"
 
     def test_default_timeout(self):
         client = HttpClient()
@@ -36,7 +24,7 @@ class TestHttpClientInit:
 class TestHttpClientRequest:
 
     def _make_client(self):
-        client = HttpClient(base_url="https://api.test.com")
+        client = HttpClient()
         client.session = MagicMock()
         return client
 
@@ -46,21 +34,12 @@ class TestHttpClientRequest:
         resp.raise_for_status = MagicMock()
         return resp
 
-    def test_builds_url_from_base_and_path(self):
+    def test_passes_url_to_session(self):
         client = self._make_client()
         resp = self._mock_response()
         client.session.request.return_value = resp
 
-        client.request("GET", "users/1")
-        call_args = client.session.request.call_args
-        assert call_args[0] == ("GET", "https://api.test.com/users/1")
-
-    def test_strips_leading_slash_from_path(self):
-        client = self._make_client()
-        resp = self._mock_response()
-        client.session.request.return_value = resp
-
-        client.request("GET", "/users/1")
+        client.request("GET", "https://api.test.com/users/1")
         call_args = client.session.request.call_args
         assert call_args[0] == ("GET", "https://api.test.com/users/1")
 
@@ -69,7 +48,7 @@ class TestHttpClientRequest:
         resp = self._mock_response()
         client.session.request.return_value = resp
 
-        client.request("GET", "test")
+        client.request("GET", "https://api.test.com/test")
         call_kwargs = client.session.request.call_args[1]
         assert call_kwargs["timeout"] == DEFAULT_TIMEOUT
 
@@ -78,7 +57,7 @@ class TestHttpClientRequest:
         resp = self._mock_response()
         client.session.request.return_value = resp
 
-        client.request("GET", "test", timeout=99)
+        client.request("GET", "https://api.test.com/test", timeout=99)
         call_kwargs = client.session.request.call_args[1]
         assert call_kwargs["timeout"] == 99
 
@@ -87,7 +66,7 @@ class TestHttpClientRequest:
         resp = self._mock_response()
         client.session.request.return_value = resp
 
-        client.request("POST", "data", json={"key": "val"}, headers={"X-Custom": "1"})
+        client.request("POST", "https://api.test.com/data", json={"key": "val"}, headers={"X-Custom": "1"})
         call_kwargs = client.session.request.call_args[1]
         assert call_kwargs["json"] == {"key": "val"}
         assert call_kwargs["headers"] == {"X-Custom": "1"}
@@ -97,7 +76,7 @@ class TestHttpClientRequest:
         resp = self._mock_response()
         client.session.request.return_value = resp
 
-        result = client.request("GET", "ok")
+        result = client.request("GET", "https://api.test.com/ok")
         assert result is resp
 
     def test_raises_on_connection_error(self):
@@ -105,14 +84,14 @@ class TestHttpClientRequest:
         client.session.request.side_effect = requests.ConnectionError("refused")
 
         with pytest.raises(requests.ConnectionError):
-            client.request("GET", "fail")
+            client.request("GET", "https://api.test.com/fail")
 
     def test_raises_on_timeout(self):
         client = self._make_client()
         client.session.request.side_effect = requests.Timeout("timed out")
 
         with pytest.raises(requests.Timeout):
-            client.request("GET", "slow")
+            client.request("GET", "https://api.test.com/slow")
 
     def test_raises_on_http_error(self):
         client = self._make_client()
@@ -122,7 +101,7 @@ class TestHttpClientRequest:
         client.session.request.return_value = resp
 
         with pytest.raises(requests.HTTPError):
-            client.request("GET", "missing")
+            client.request("GET", "https://api.test.com/missing")
 
     def test_supports_all_http_methods(self):
         client = self._make_client()
@@ -130,5 +109,5 @@ class TestHttpClientRequest:
         client.session.request.return_value = resp
 
         for method in ("GET", "POST", "PUT", "PATCH", "DELETE"):
-            client.request(method, "resource")
+            client.request(method, "https://api.test.com/resource")
             assert client.session.request.call_args[0][0] == method

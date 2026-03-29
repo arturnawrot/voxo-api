@@ -1,9 +1,6 @@
 import logging
-from urllib.parse import urljoin
 
 import requests
-
-from voxo.constants import BASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +9,11 @@ DEFAULT_TIMEOUT = 30
 
 class HttpClient:
 
-    def __init__(self, base_url: str = BASE_URL, timeout: int = DEFAULT_TIMEOUT) -> None:
-        self.base_url = base_url.rstrip("/") + "/"
+    def __init__(self, timeout: int = DEFAULT_TIMEOUT) -> None:
         self.timeout = timeout
         self.session = requests.Session()
 
-    def request(self, method: str, path: str, **kwargs) -> requests.Response:
-        url = urljoin(self.base_url, path.lstrip("/"))
+    def request(self, method: str, url: str, **kwargs) -> requests.Response:
         kwargs.setdefault("timeout", self.timeout)
 
         logger.debug("HTTP %s %s", method, url)

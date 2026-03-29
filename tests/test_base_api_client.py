@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch, call
 
 import pytest
 
-from voxo.base_api_client import BaseApiClient
-from voxo.credentials import CredentialsV1, CredentialsV2
-from voxo.http_client import HttpClient
+from voxo_api.base_api_client import BaseApiClient
+from voxo_api.credentials import CredentialsV1, CredentialsV2
+from voxo_api.http_client import HttpClient
 
 
 class TestBaseApiClientInit:
@@ -14,7 +14,7 @@ class TestBaseApiClientInit:
         client = BaseApiClient(credentials=[], http=http)
         assert client.http is http
 
-    @patch("voxo.base_api_client.HttpClient")
+    @patch("voxo_api.base_api_client.HttpClient")
     def test_creates_default_http_client(self, mock_http_cls):
         client = BaseApiClient(credentials=[])
         mock_http_cls.assert_called_once()

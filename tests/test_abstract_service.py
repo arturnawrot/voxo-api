@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from voxo.credentials import Credentials, CredentialsV1, CredentialsV2
-from voxo.services.abstract_service import AbstractService
+from voxo_api.credentials import Credentials, CredentialsV1, CredentialsV2
+from voxo_api.services.abstract_service import AbstractService
 
 
 # --- Helpers ---
@@ -119,11 +119,11 @@ class TestBuildUrl:
 
     def test_path_only(self):
         service = FakeService(_make_api_client())
-        assert service._build_url("") == "fake-endpoint"
+        assert service._build_url("") == "https://api.voxo.co/fake-endpoint"
 
     def test_with_uri_params(self):
         service = FakeService(_make_api_client())
-        assert service._build_url("123") == "fake-endpoint/123"
+        assert service._build_url("123") == "https://api.voxo.co/fake-endpoint/123"
 
     def test_strips_slashes_from_path_and_params(self):
         class SlashyService(FakeService):
@@ -131,7 +131,7 @@ class TestBuildUrl:
                 return "/slashy/"
 
         service = SlashyService(_make_api_client())
-        assert service._build_url("/456/") == "slashy/456"
+        assert service._build_url("/456/") == "https://api.voxo.co/slashy/456"
 
     def test_empty_uri_params_no_trailing_slash(self):
         service = FakeService(_make_api_client())
@@ -299,7 +299,7 @@ class TestExecute:
         result = service.execute()
 
         client.http.request.assert_called_once_with(
-            "GET", "fake-endpoint", headers={"Authorization": "Bearer tok"}, json=None
+            "GET", "https://api.voxo.co/fake-endpoint", headers={"Authorization": "Bearer tok"}, json=None
         )
         assert result == FakeModel(name="result", value=99)
 
@@ -319,7 +319,7 @@ class TestExecute:
         service.execute(item_id=42)
 
         call_args = client.http.request.call_args
-        assert call_args[0][1] == "fake-endpoint/42"
+        assert call_args[0][1] == "https://api.voxo.co/fake-endpoint/42"
 
     def test_execute_with_body(self):
         class PostService(FakeService):

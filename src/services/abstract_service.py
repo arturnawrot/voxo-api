@@ -3,11 +3,14 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generic, TypeVar
+from urllib.parse import urljoin
 
-from voxo.credentials import Credentials
+from voxo_api.constants import BASE_URL
+from voxo_api.credentials import Credentials
+from voxo_api.enums import HttpMethod
 
 if TYPE_CHECKING:
-    from voxo.base_api_client import BaseApiClient
+    from voxo_api.base_api_client import BaseApiClient
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +28,7 @@ class AbstractService(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_method(self) -> str:
+    def get_method(self) -> HttpMethod:
         pass
 
     @abstractmethod
@@ -59,7 +62,7 @@ class AbstractService(ABC, Generic[T]):
         path = self.get_url_path().strip("/")
         if uri_params:
             path = f"{path}/{uri_params.strip('/')}"
-        return path
+        return urljoin(BASE_URL.rstrip("/") + "/", path)
 
     def _build_headers(self, credentials: Credentials, **kwargs) -> dict:
         headers = self.get_headers(**kwargs)

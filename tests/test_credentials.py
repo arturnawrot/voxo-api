@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from voxo.credentials import Credentials, CredentialsV1, CredentialsV2
+from voxo_api.credentials import Credentials, CredentialsV1, CredentialsV2
 
 
 # --- Credentials ABC ---

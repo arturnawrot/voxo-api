@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from voxo.http_client import HttpClient
+    from voxo_api.http_client import HttpClient
 
 
 class Credentials(ABC):
