@@ -23,3 +23,23 @@ class CreateAccessToken(AbstractService[AuthResponse]):
             "email": email,
             "password": password,
         }
+
+
+class AuthenticateAccessToken(AbstractService[AuthResponse]):
+
+    def get_credentials_class(self) -> type[Credentials]:
+        return NoAuth
+
+    def get_method(self) -> HttpMethod:
+        return HttpMethod.POST
+
+    def get_url_path(self) -> str:
+        return "v2/authentication/jwt"
+
+    def get_response_type(self) -> type[AuthResponse]:
+        return AuthResponse
+
+    def get_body(self, access_token: str, **kwargs) -> dict:
+        return {
+            "accessToken": access_token,
+        }
