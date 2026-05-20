@@ -8,24 +8,24 @@ class CallLogRecord:
     startTime: str
     direction: str
     endTime: str
-    cidNumber: str
+    cidNum: str
     cidName: str
-    dialedNumber: str
+    dialedNum: str
     dialedName: str
     disposition: str
-    queueCall: int
     recorded: int
     isTollFree: int
     isInternational: int
     presented: int
-    mos: float
-    geolocation: str
-    uniqueId: str
-    answeredAt: str
-    isTransferred: int
     tag: Optional[str]
     outcome: Optional[int]
     outcomeName: Optional[str]
+    geolocation: Optional[str] = None
+    queueCall: Optional[int] = None
+    mos: Optional[float] = None
+    uniqueId: Optional[str] = None
+    answeredAt: Optional[str] = None
+    isTransferred: Optional[int] = None
 
 
 @dataclass
